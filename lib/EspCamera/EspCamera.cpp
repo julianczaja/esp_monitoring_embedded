@@ -35,7 +35,7 @@ bool EspCamera::init(uint8_t deviceId)
     config.pin_reset = RESET_GPIO_NUM;
     config.xclk_freq_hz = 20000000;
     config.pixel_format = PIXFORMAT_JPEG;
-    config.frame_size = FRAMESIZE_UXGA; // FRAMESIZE_UXGA;
+    config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 10;
     config.grab_mode = CAMERA_GRAB_LATEST;
     config.fb_count = 2;

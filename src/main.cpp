@@ -1,37 +1,76 @@
 #include <Arduino.h>
+#include <WiFi.h>
 #include "esp_camera.h"
-
 #include "WiFiConfiguration.h"
 #include "Led.h"
 #include "DataManager.h"
 #include "EspCamera.h"
+#include "EspOTA.h"
+#include "BLEManager.h"
 
 #define DEVICE_ID 1
 #define WIFI_CONNECTION_TIMEOUT 10e3 // ms
-#define SLEEP_TIME_DEFAULT 9e8       // us (15min)
+#define SLEEP_TIME_DEFAULT 6e8       // us (10min)
 #define MAX_TRIES 3
 
-// enum CameraMode
-// {
-//   TAKE_ONE_SEND_AND_SLEEP = 0,
-//   TAKE_X_SEND_AND_SLEEP = 1,
-//   TAKE_WHEN_PIR_SEND_AND_SLEEP = 2,
-// };
+enum Mode
+{
+  CONFIGURATION = 0,
+  CAMERA = 1
+};
 
+
+void setupConfigurationMode();
+void setupCameraMode();
 void onError(char *message);
 void goToSleep(unsigned long sleepTime);
 void connectToWifi(WiFiConfiguration *wifiConfiguration);
 
 DataManager dataManager = DataManager();
 Led ledBuiltin = Led(33);
-EspCamera camera;
 
 void setup()
 {
   Serial.begin(115200);
   dataManager.init();
-
   delay(1000);
+
+  Mode mode;
+  if (digitalRead(GPIO_NUM_16))
+  {
+    mode = CONFIGURATION;
+  }
+  else
+  {
+    mode = CAMERA;
+  }
+
+  if (mode == CONFIGURATION)
+  {
+    setupConfigurationMode();
+  }
+  else if (mode == CAMERA)
+  {
+    setupCameraMode();
+  }
+}
+
+void loop() {}
+
+void setupConfigurationMode()
+{
+  EspOTA ota;
+  ota.init();
+  ota.waitForUpdate(5000, ledBuiltin);
+
+  BLEManager bleManager = BLEManager(dataManager);
+  bleManager.init();
+}
+
+void setupCameraMode()
+{
+  EspCamera camera;
+
   if (camera.init(DEVICE_ID) == false)
   {
     dataManager.increaseFailuresCount();
@@ -69,8 +108,6 @@ void setup()
 
   goToSleep(SLEEP_TIME_DEFAULT);
 }
-
-void loop() {}
 
 void connectToWifi(WiFiConfiguration *wifiConfiguration)
 {
@@ -114,6 +151,7 @@ void goToSleep(unsigned long sleepTimeMicros)
   Serial.println(" minutes!");
   Serial.flush();
   Serial.end();
+  ledBuiltin.off();
 
   ESP.deepSleep(sleepTimeMicros);
 }
