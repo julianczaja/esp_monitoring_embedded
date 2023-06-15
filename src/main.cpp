@@ -5,7 +5,6 @@
 #include "Led.h"
 #include "DataManager.h"
 #include "EspCamera.h"
-#include "EspOTA.h"
 #include "BLEManager.h"
 
 #define DEVICE_ID 1
@@ -59,10 +58,6 @@ void loop() {}
 
 void setupConfigurationMode()
 {
-  EspOTA ota;
-  ota.init();
-  ota.waitForUpdate(5000, ledBuiltin);
-
   BLEManager bleManager = BLEManager(dataManager);
   bleManager.init();
 }
