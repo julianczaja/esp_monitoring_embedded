@@ -18,7 +18,6 @@ enum Mode
   CAMERA = 1
 };
 
-
 void setupConfigurationMode();
 void setupCameraMode();
 void onError(char *message);
@@ -31,18 +30,24 @@ Led ledBuiltin = Led(33);
 void setup()
 {
   Serial.begin(115200);
+  Serial.println("Hello world");
+  Serial.printf("Total heap: %d\n", ESP.getHeapSize());
+  Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
+  Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
+  Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
   dataManager.init();
   delay(1000);
 
   Mode mode;
-  if (digitalRead(GPIO_NUM_16))
-  {
-    mode = CONFIGURATION;
-  }
-  else
-  {
-    mode = CAMERA;
-  }
+   mode = CONFIGURATION;
+  // if (digitalRead(GPIO_NUM_16))
+  // {
+  //   mode = CAMERA;
+  // }
+  // else
+  // {
+  //   mode = CONFIGURATION;
+  // }
 
   if (mode == CONFIGURATION)
   {
@@ -50,7 +55,7 @@ void setup()
   }
   else if (mode == CAMERA)
   {
-    setupCameraMode();
+    // setupCameraMode();
   }
 }
 
@@ -58,17 +63,20 @@ void loop() {}
 
 void setupConfigurationMode()
 {
-  BLEManager bleManager = BLEManager(dataManager);
+  Serial.println("setupConfigurationMode");
+  BLEManager bleManager = BLEManager(DEVICE_ID, dataManager);
   bleManager.init();
 }
 
 void setupCameraMode()
 {
+  Serial.println("setupCameraMode");
   EspCamera camera;
 
   if (camera.init(DEVICE_ID) == false)
   {
-    dataManager.increaseFailuresCount();
+    onError((char *)"Can't init camera");
+    // dataManager.increaseFailuresCount();
   }
 
   WiFiConfiguration wifiConfiguration = WiFiConfiguration();
