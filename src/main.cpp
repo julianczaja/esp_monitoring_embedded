@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include "esp_camera.h"
 #include "WiFiConfiguration.h"
+#include "CameraConfiguration.h"
 #include "Led.h"
 #include "DataManager.h"
 #include "EspCamera.h"
@@ -9,7 +10,7 @@
 
 #define DEVICE_ID 1
 #define WIFI_CONNECTION_TIMEOUT 10e3 // ms
-#define SLEEP_TIME_DEFAULT 6e8       // us (10min)
+#define SLEEP_TIME_DEFAULT 3e8       // us (5min)
 #define MAX_TRIES 3
 
 enum Mode
@@ -23,6 +24,7 @@ void setupCameraMode();
 void onError(char *message);
 void goToSleep(unsigned long sleepTime);
 void connectToWifi(WiFiConfiguration *wifiConfiguration);
+unsigned long getSleepTimeFromPhotoInterval(uint16_t photoInterval);
 
 DataManager dataManager = DataManager();
 Led ledBuiltin = Led(33);
@@ -35,19 +37,47 @@ void setup()
   Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
   Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
   Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
+
   dataManager.init();
-  delay(1000);
+
+  if (dataManager.getIsFirstRun())
+  {
+    Serial.println("First run detected!");
+    dataManager.clearAll();
+    WiFiConfiguration wifiConfiguration = WiFiConfiguration();
+    strcpy(wifiConfiguration.ssid, "ssid");
+    strcpy(wifiConfiguration.password, "password");
+    dataManager.setWiFiConfiguration(&wifiConfiguration);
+    CameraConfiguration cameraConfiguration = {
+        .frameSize = 9,
+        .photoInterval = 4,
+        .specialEffect = 0,
+        .whiteBalance = 0,
+        .quality = 10,
+        .brightness = 0,
+        .contrast = 0,
+        .saturation = 0,
+        .flashOn = 0,
+        .verticalFlip = 0,
+        .horizontalMirror = 0
+    };
+    dataManager.setCameraConfiguration(&cameraConfiguration);
+    dataManager.setIsFirstRun(false);
+  }
+
+  delay(100);
 
   Mode mode;
-   mode = CONFIGURATION;
-  // if (digitalRead(GPIO_NUM_16))
-  // {
-  //   mode = CAMERA;
-  // }
-  // else
-  // {
-  //   mode = CONFIGURATION;
-  // }
+  //  mode = CAMERA;
+  //  mode = CONFIGURATION;
+  if (digitalRead(GPIO_NUM_16))
+  {
+    mode = CAMERA;
+  }
+  else
+  {
+    mode = CONFIGURATION;
+  }
 
   if (mode == CONFIGURATION)
   {
@@ -55,7 +85,7 @@ void setup()
   }
   else if (mode == CAMERA)
   {
-    // setupCameraMode();
+    setupCameraMode();
   }
 }
 
@@ -73,10 +103,13 @@ void setupCameraMode()
   Serial.println("setupCameraMode");
   EspCamera camera;
 
-  if (camera.init(DEVICE_ID) == false)
+  CameraConfiguration cameraConfiguration = CameraConfiguration();
+  dataManager.getCameraConfiguration(&cameraConfiguration);
+
+  if (camera.init(DEVICE_ID, &cameraConfiguration) == false)
   {
+    dataManager.increaseFailuresCount();
     onError((char *)"Can't init camera");
-    // dataManager.increaseFailuresCount();
   }
 
   WiFiConfiguration wifiConfiguration = WiFiConfiguration();
@@ -87,7 +120,8 @@ void setupCameraMode()
 
   for (int i = 0; i < MAX_TRIES; i++)
   {
-    bool ret = camera.getAndSendPhoto();
+    bool isFlashOn = (bool) cameraConfiguration.flashOn;
+    bool ret = camera.getAndSendPhoto(isFlashOn);
     Serial.print("getAndSendPhoto ret = ");
     Serial.println(ret);
     if (ret)
@@ -109,7 +143,7 @@ void setupCameraMode()
     delay(2000);
   }
 
-  goToSleep(SLEEP_TIME_DEFAULT);
+  goToSleep(getSleepTimeFromPhotoInterval(cameraConfiguration.photoInterval));
 }
 
 void connectToWifi(WiFiConfiguration *wifiConfiguration)
@@ -157,4 +191,20 @@ void goToSleep(unsigned long sleepTimeMicros)
   ledBuiltin.off();
 
   ESP.deepSleep(sleepTimeMicros);
+}
+
+unsigned long getSleepTimeFromPhotoInterval(uint16_t photoInterval)
+{
+  switch (photoInterval)
+  {
+    case 0: return 5e6;     // FIVE_SECONDS
+    case 1: return 30e6;    // HALF_MINUTE
+    case 2: return 60e6;    // ONE_MINUTE
+    case 3: return 120e6;   // TWO_MINUTES
+    case 4: return 300e6;   // FIVE_MINUTES
+    case 5: return 600e6;   // TEN_MINUTES
+    case 6: return 1800e6;  // HALF_HOUR
+    case 7: return 3600e6;  // ONE_HOUR
+    default: return SLEEP_TIME_DEFAULT;
+  }
 }

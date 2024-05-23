@@ -4,7 +4,10 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+
 #include "esp_camera.h"
+#include "CameraConfiguration.h"
+#include "Led.h"
 
 #define PWDN_GPIO_NUM 32
 #define RESET_GPIO_NUM -1
@@ -29,19 +32,24 @@ class EspCamera
 public:
     EspCamera();
 
-    bool init(uint8_t deviceId);
+    bool init(uint8_t deviceId, const CameraConfiguration *cameraConfiguration);
     bool deinit();
     void warmup();
-    bool getAndSendPhoto();
+    bool getAndSendPhoto(bool isFlashOn);
 
 private:
-    const String serverName = "http://192.168.1.11:8123/";
+    const String serverName = "http://192.168.1.57:8123/";
     const String serverPath = "photo/";
+
+    void updateConfiguration(sensor_t *sensor, const CameraConfiguration cameraConfiguration);
+    void printCameraConfiguration(const CameraConfiguration *cameraConfiguration);
+    framesize_t getFrameSizeByOrdinal(int ordinal);
 
     bool _isInitialized = false;
     uint8_t _deviceId;
     HTTPClient _http;
     WiFiClient _client;
+    Led _ledFlash = Led(4);
 };
 
 #endif

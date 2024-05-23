@@ -8,6 +8,26 @@ void DataManager::init()
     Serial.println(getFailuresCount());
 }
 
+bool DataManager::getIsFirstRun() 
+{
+    Serial.println("\n> DataManager::getIsFirstRun");
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    uint8_t isFirstRun = EEPROM.readByte(FIRST_RUN_FLAG_ADDRESS);
+    Serial.printf("isFirstRun: %d (%d)\n", isFirstRun != 123, isFirstRun);
+    EEPROM.end();
+    return isFirstRun != 123; 
+}
+
+void DataManager::setIsFirstRun(bool isFirstRun) 
+{
+    Serial.printf("\n> DataManager::setIsFirstRun: %d\n", isFirstRun);
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.writeByte(FIRST_RUN_FLAG_ADDRESS, isFirstRun ? 0 : 123);
+    EEPROM.end();
+}
+
 void DataManager::setWiFiConfiguration(WiFiConfiguration *wifiConfiguration)
 {
     Serial.println("\n> DataManager::setWiFiConfiguration");
@@ -27,6 +47,44 @@ void DataManager::getWiFiConfiguration(WiFiConfiguration *wifiConfiguration)
     delay(READ_WRITE_WAIT_TIME_MS);
     EEPROM.get(WIFI_CONFIGURATION_ADDRESS, *wifiConfiguration);
     delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.end();
+}
+
+void DataManager::getCameraConfiguration(CameraConfiguration *cameraConfiguration)
+{
+    Serial.println("\n> DataManager::getCameraConfiguration");
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    cameraConfiguration->frameSize = EEPROM.readUShort(FRAME_SIZE_ADDRESS);
+    cameraConfiguration->specialEffect = EEPROM.readUShort(SPECIAL_EFFECT_ADDRESS);
+    cameraConfiguration->whiteBalance = EEPROM.readUShort(WHITE_BALANCE_ADDRESS);
+    cameraConfiguration->quality = EEPROM.readUShort(QUALITY_ADDRESS);
+    cameraConfiguration->brightness = EEPROM.readChar(BRIGHTNESS_ADDRESS);
+    cameraConfiguration->contrast = EEPROM.readChar(CONTRAST_ADDRESS);
+    cameraConfiguration->saturation = EEPROM.readChar(SATURATION_ADDRESS);
+    cameraConfiguration->flashOn = EEPROM.readUShort(FLASH_ON_ADDRESS);
+    cameraConfiguration->verticalFlip = EEPROM.readUShort(VERTICAL_FLIP_ADDRESS);
+    cameraConfiguration->horizontalMirror = EEPROM.readUShort(HORIZONTAL_MIRROR_ADDRESS);
+    cameraConfiguration->photoInterval = EEPROM.readUShort(PHOTO_INTERVAL_ADDRESS);
+    EEPROM.end();
+}
+
+void DataManager::setCameraConfiguration(const CameraConfiguration *cameraConfiguration)
+{
+    Serial.println("\n> DataManager::setCameraConfiguration");
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.writeUShort(FRAME_SIZE_ADDRESS, cameraConfiguration->frameSize);
+    EEPROM.writeUShort(SPECIAL_EFFECT_ADDRESS, cameraConfiguration->specialEffect);
+    EEPROM.writeUShort(WHITE_BALANCE_ADDRESS, cameraConfiguration->whiteBalance);
+    EEPROM.writeUShort(QUALITY_ADDRESS, cameraConfiguration->quality);
+    EEPROM.writeChar(BRIGHTNESS_ADDRESS, cameraConfiguration->brightness);
+    EEPROM.writeChar(CONTRAST_ADDRESS, cameraConfiguration->contrast);
+    EEPROM.writeChar(SATURATION_ADDRESS, cameraConfiguration->saturation);
+    EEPROM.writeUShort(FLASH_ON_ADDRESS, cameraConfiguration->flashOn);
+    EEPROM.writeUShort(VERTICAL_FLIP_ADDRESS, cameraConfiguration->verticalFlip);
+    EEPROM.writeUShort(HORIZONTAL_MIRROR_ADDRESS, cameraConfiguration->horizontalMirror);
+    EEPROM.writeUShort(PHOTO_INTERVAL_ADDRESS, cameraConfiguration->photoInterval);
     EEPROM.end();
 }
 

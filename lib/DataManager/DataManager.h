@@ -5,23 +5,25 @@
 #include <EEPROM.h>
 
 #include "WiFiConfiguration.h"
+#include "CameraConfiguration.h"
 
 #define EEPROM_SIZE                 128
-#define WIFI_CONFIGURATION_ADDRESS  0
-#define FAILURES_COUNT_ADDRESS      64
-#define FRAME_SIZE_ADDRESS          66
-#define PHOTO_INTERVAL_ADDRESS      68
-#define SPECIAL_EFFECT_ADDRESS      70
-#define WHITE_BALANCE_ADDRESS       72
-#define QUALITY_ADDRESS             74
-#define BRIGHTNESS_ADDRESS          76
-#define CONTRAST_ADDRESS            78
-#define SATURATION_ADDRESS          80
-#define FLASH_ON_ADDRESS            82
-#define VERTICAL_FLIP_ADDRESS       84
-#define HORIZONTAL_MIRROR_ADDRESS   86
+#define FIRST_RUN_FLAG_ADDRESS      0
+#define WIFI_CONFIGURATION_ADDRESS  1
+#define FAILURES_COUNT_ADDRESS      65
+#define FRAME_SIZE_ADDRESS          67
+#define PHOTO_INTERVAL_ADDRESS      69
+#define SPECIAL_EFFECT_ADDRESS      71
+#define WHITE_BALANCE_ADDRESS       73
+#define QUALITY_ADDRESS             75
+#define BRIGHTNESS_ADDRESS          77
+#define CONTRAST_ADDRESS            79
+#define SATURATION_ADDRESS          81
+#define FLASH_ON_ADDRESS            83
+#define VERTICAL_FLIP_ADDRESS       85
+#define HORIZONTAL_MIRROR_ADDRESS   87
 
-#define READ_WRITE_WAIT_TIME_MS     50
+#define READ_WRITE_WAIT_TIME_MS     30
 
 class DataManager
 {
@@ -30,8 +32,14 @@ public:
 
     void init();
 
+    bool getIsFirstRun();
+    void setIsFirstRun(bool isFirstRun);
+
     void setWiFiConfiguration(WiFiConfiguration *wifiConfiguration);
     void getWiFiConfiguration(WiFiConfiguration *wifiConfiguration);
+
+    void getCameraConfiguration(CameraConfiguration *cameraConfiguration);
+    void setCameraConfiguration(const CameraConfiguration *cameraConfiguration);
 
     uint16_t getFrameSize();
     void setFrameSize(uint16_t frameSize);
