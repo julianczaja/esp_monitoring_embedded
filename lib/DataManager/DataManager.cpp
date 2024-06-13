@@ -14,9 +14,9 @@ bool DataManager::getIsFirstRun()
     EEPROM.begin(EEPROM_SIZE);
     delay(READ_WRITE_WAIT_TIME_MS);
     uint8_t isFirstRun = EEPROM.readByte(FIRST_RUN_FLAG_ADDRESS);
-    Serial.printf("isFirstRun: %d (%d)\n", isFirstRun != 123, isFirstRun);
+    Serial.printf("isFirstRun: %d (%d)\n", isFirstRun != 124, isFirstRun);
     EEPROM.end();
-    return isFirstRun != 123; 
+    return isFirstRun != 124; 
 }
 
 void DataManager::setIsFirstRun(bool isFirstRun) 
@@ -24,7 +24,27 @@ void DataManager::setIsFirstRun(bool isFirstRun)
     Serial.printf("\n> DataManager::setIsFirstRun: %d\n", isFirstRun);
     EEPROM.begin(EEPROM_SIZE);
     delay(READ_WRITE_WAIT_TIME_MS);
-    EEPROM.writeByte(FIRST_RUN_FLAG_ADDRESS, isFirstRun ? 0 : 123);
+    EEPROM.writeByte(FIRST_RUN_FLAG_ADDRESS, isFirstRun ? 0 : 124);
+    EEPROM.end();
+}
+
+uint16_t DataManager::getDeviceId()
+{
+    Serial.println("\n> DataManager::getDeviceId");
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    uint16_t deviceId = EEPROM.readUShort(DEVICE_ID_ADDRESS);
+    Serial.printf("deviceId: %d\n", deviceId);
+    EEPROM.end();
+    return deviceId;
+}
+
+void DataManager::setDeviceId(uint16_t deviceId)
+{
+    Serial.printf("\n> DataManager::setDeviceId: %d\n", deviceId);
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.writeUShort(DEVICE_ID_ADDRESS, deviceId);
     EEPROM.end();
 }
 
@@ -46,6 +66,67 @@ void DataManager::getWiFiConfiguration(WiFiConfiguration *wifiConfiguration)
     EEPROM.begin(EEPROM_SIZE);
     delay(READ_WRITE_WAIT_TIME_MS);
     EEPROM.get(WIFI_CONFIGURATION_ADDRESS, *wifiConfiguration);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.end();
+}
+
+std::string DataManager::getWiFiSsid() 
+{
+    Serial.println("\n> DataManager::getWiFiSsid");
+
+    WiFiConfiguration wifiConfig;
+
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.get(WIFI_CONFIGURATION_ADDRESS, wifiConfig);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.end();
+
+    return std::string(wifiConfig.ssid);
+}
+
+void DataManager::setWiFiSsid(std::string ssid) 
+{
+    Serial.println("\n> DataManager::setWiFiSsid");
+
+    WiFiConfiguration wifiConfig;
+
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.get(WIFI_CONFIGURATION_ADDRESS, wifiConfig);
+    delay(READ_WRITE_WAIT_TIME_MS);
+
+    if (ssid.length() >= sizeof(wifiConfig.ssid)) {
+        Serial.println("\n> SSID too long!");
+        return;
+    } else {
+        strcpy(wifiConfig.ssid, ssid.c_str());
+    }
+
+    EEPROM.put(WIFI_CONFIGURATION_ADDRESS, wifiConfig);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.end();
+}
+
+void DataManager::setWiFiPassword(std::string password) 
+{
+    Serial.println("\n> DataManager::setWiFiPassword");
+
+    WiFiConfiguration wifiConfig;
+
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.get(WIFI_CONFIGURATION_ADDRESS, wifiConfig);
+    delay(READ_WRITE_WAIT_TIME_MS);
+
+    if (password.length() >= sizeof(wifiConfig.password)) {
+        Serial.println("\n> Error: Password too long!");
+        return;
+    } else {
+        strcpy(wifiConfig.password, password.c_str());
+    }
+
+    EEPROM.put(WIFI_CONFIGURATION_ADDRESS, wifiConfig);
     delay(READ_WRITE_WAIT_TIME_MS);
     EEPROM.end();
 }

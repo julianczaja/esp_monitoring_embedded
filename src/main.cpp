@@ -44,6 +44,7 @@ void setup()
   {
     Serial.println("First run detected!");
     dataManager.clearAll();
+    dataManager.setDeviceId(DEVICE_ID);
     WiFiConfiguration wifiConfiguration = WiFiConfiguration();
     strcpy(wifiConfiguration.ssid, "ssid");
     strcpy(wifiConfiguration.password, "password");

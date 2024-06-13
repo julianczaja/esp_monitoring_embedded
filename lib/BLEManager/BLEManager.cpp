@@ -16,19 +16,26 @@ void BLEManager::init()
     _server = BLEDevice::createServer();
     _server->setCallbacks(new SettingsServerCallbacks());
 
-    _infoService = _server->createService(BLEUUID(INFO_SERVICE_UUID), 1U, 0U);
-    _settingsService = _server->createService(BLEUUID(SETTINGS_SERVICE_UUID), 24U, 1U);
+    characteristicsCallback = new SettingsCharacteristicCallbacks(_dataManager);
 
-    setupCharacteristics();
-
+    _infoService = _server->createService(BLEUUID(INFO_SERVICE_UUID));
+    setupInfoServiceCharacteristics(*characteristicsCallback);
     _infoService->start();
+
+    _wifiCredentialsService = _server->createService(BLEUUID(WIFI_CREDENTIALS_SERVICE_UUID));
+    setupWifiCredentialsServiceCharacteristics(*characteristicsCallback);
+    _wifiCredentialsService->start();
+
+    _settingsService = _server->createService(BLEUUID(SETTINGS_SERVICE_UUID), 24U, 0U);
+    setupSettingsServiceCharacteristics(*characteristicsCallback);
     _settingsService->start();
 
     _advertising = BLEDevice::getAdvertising();
     _advertising->addServiceUUID(INFO_SERVICE_UUID);
+    _advertising->addServiceUUID(WIFI_CREDENTIALS_SERVICE_UUID);
     _advertising->addServiceUUID(SETTINGS_SERVICE_UUID);
     _advertising->setScanResponse(true);
-    _advertising->setMinPreferred(0x06); // functions that help with iPhone connections issue
+    _advertising->setMinPreferred(0x06);
     _advertising->setMinPreferred(0x12);
     BLEDevice::startAdvertising();
     Serial.println("BLEManager::init() DONE");
@@ -36,16 +43,39 @@ void BLEManager::init()
     initialized = true;
 }
 
-void BLEManager::setupCharacteristics()
+void BLEManager::setupInfoServiceCharacteristics(SettingsCharacteristicCallbacks callback)
 {
-    characteristicsCallback = new SettingsCharacteristicCallbacks(_dataManager);
-
+    BLEDescriptor *deviceIdDescriptor = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
+    deviceIdDescriptor->setValue("Device ID");
     BLECharacteristic *deviceIdCharacteristic = _infoService->createCharacteristic(
         DEVICE_ID_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ);
     deviceIdCharacteristic->setReadProperty(_deviceId);
-    // deviceIdCharacteristic->addDescriptor();
+    deviceIdCharacteristic->addDescriptor(deviceIdDescriptor);
     deviceIdCharacteristic->setCallbacks(characteristicsCallback);
+}
 
+void BLEManager::setupWifiCredentialsServiceCharacteristics(SettingsCharacteristicCallbacks callback)
+{
+    BLEDescriptor *ssidDescriptor = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
+    ssidDescriptor->setValue("SSID");
+    BLECharacteristic *wifiSsidCharacteristic = _wifiCredentialsService->createCharacteristic(
+        WIFI_SSID_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+    WiFiConfiguration wifiConfiguration = WiFiConfiguration();
+    _dataManager.getWiFiConfiguration(&wifiConfiguration);
+    wifiSsidCharacteristic->setReadProperty(wifiConfiguration.ssid);
+    wifiSsidCharacteristic->addDescriptor(ssidDescriptor);
+    wifiSsidCharacteristic->setCallbacks(characteristicsCallback);
+
+    BLEDescriptor *passwordDescriptor = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
+    passwordDescriptor->setValue("Password");
+    BLECharacteristic *wifiPasswordCharacteristic = _wifiCredentialsService->createCharacteristic(
+        WIFI_PASSWORD_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE);
+    wifiPasswordCharacteristic->addDescriptor(passwordDescriptor);
+    wifiPasswordCharacteristic->setCallbacks(characteristicsCallback);
+}
+
+void BLEManager::setupSettingsServiceCharacteristics(SettingsCharacteristicCallbacks callback)
+{
     BLECharacteristic *frameSizeCharacteristic = _settingsService->createCharacteristic(
         FRAME_SIZE_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
     uint16_t frameSize = _dataManager.getFrameSize();
@@ -135,9 +165,19 @@ void SettingsCharacteristicCallbacks::onWrite(BLECharacteristic *characteristic)
     Serial.printf("SettingsCharacteristicCallbacks::onWrite -> BT UUID write received %s\n", uuid.c_str());
 
     std::string value = characteristic->getValue();
-    Serial.printf("SettingsCharacteristicCallbacks::onWrite -> value= %s\n", value.c_str());
+    Serial.printf("SettingsCharacteristicCallbacks::onWrite -> value: %s\n", value.c_str());
 
-    if (uuid == FRAME_SIZE_CHARACTERISTIC_UUID)
+    if (uuid == WIFI_SSID_CHARACTERISTIC_UUID)
+    {
+        Serial.printf("WIFI_SSID_CHARACTERISTIC_UUID value: %s\n", value.c_str());
+        _dataManager.setWiFiSsid(value);
+    }
+    else if (uuid == WIFI_PASSWORD_CHARACTERISTIC_UUID)
+    {
+        Serial.printf("WIFI_PASSWORD_CHARACTERISTIC_UUID value: %s\n", value.c_str());
+        _dataManager.setWiFiPassword(value);
+    }
+    else if (uuid == FRAME_SIZE_CHARACTERISTIC_UUID)
     {
         uint16_t frameSize = strtol(value.c_str(), NULL, 10);
         Serial.printf("FRAME_SIZE_CHARACTERISTIC_UUID value converted: %d\n", frameSize);
@@ -212,11 +252,24 @@ void SettingsCharacteristicCallbacks::onWrite(BLECharacteristic *characteristic)
 void SettingsCharacteristicCallbacks::onRead(BLECharacteristic *characteristic)
 {
     String uuid = characteristic->getUUID().toString().c_str();
-    Serial.printf("SettingsCharacteristicCallbacks::onRead -> BT UUID write received %s\n", uuid.c_str());
+    Serial.printf("SettingsCharacteristicCallbacks::onRead -> BT UUID read received %s\n", uuid.c_str());
+
+    if (uuid == WIFI_SSID_CHARACTERISTIC_UUID)
+    {
+        std::string ssid = _dataManager.getWiFiSsid();
+    
+        Serial.printf("SettingsCharacteristicCallbacks::onRead -> setting %s\n", ssid.c_str());
+        characteristic->setValue(ssid);
+        return;
+    }
 
     int16_t data = 0;
 
-    if (uuid == FRAME_SIZE_CHARACTERISTIC_UUID)
+    if (uuid == DEVICE_ID_CHARACTERISTIC_UUID)
+    {
+        data = _dataManager.getDeviceId();
+    }
+    else if (uuid == FRAME_SIZE_CHARACTERISTIC_UUID)
     {
         data = _dataManager.getFrameSize();
     }

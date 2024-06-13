@@ -7,21 +7,22 @@
 #include "WiFiConfiguration.h"
 #include "CameraConfiguration.h"
 
-#define EEPROM_SIZE                 128
-#define FIRST_RUN_FLAG_ADDRESS      0
-#define WIFI_CONFIGURATION_ADDRESS  1
-#define FAILURES_COUNT_ADDRESS      65
-#define FRAME_SIZE_ADDRESS          67
-#define PHOTO_INTERVAL_ADDRESS      69
-#define SPECIAL_EFFECT_ADDRESS      71
-#define WHITE_BALANCE_ADDRESS       73
-#define QUALITY_ADDRESS             75
-#define BRIGHTNESS_ADDRESS          77
-#define CONTRAST_ADDRESS            79
-#define SATURATION_ADDRESS          81
-#define FLASH_ON_ADDRESS            83
-#define VERTICAL_FLIP_ADDRESS       85
-#define HORIZONTAL_MIRROR_ADDRESS   87
+#define EEPROM_SIZE                     128
+#define DEVICE_ID_ADDRESS               0
+#define FIRST_RUN_FLAG_ADDRESS          2
+#define WIFI_CONFIGURATION_ADDRESS      4
+#define FAILURES_COUNT_ADDRESS          67
+#define FRAME_SIZE_ADDRESS              69
+#define PHOTO_INTERVAL_ADDRESS          71
+#define SPECIAL_EFFECT_ADDRESS          73
+#define WHITE_BALANCE_ADDRESS           75
+#define QUALITY_ADDRESS                 77
+#define BRIGHTNESS_ADDRESS              79
+#define CONTRAST_ADDRESS                81
+#define SATURATION_ADDRESS              83
+#define FLASH_ON_ADDRESS                85
+#define VERTICAL_FLIP_ADDRESS           87
+#define HORIZONTAL_MIRROR_ADDRESS       89
 
 #define READ_WRITE_WAIT_TIME_MS     30
 
@@ -35,8 +36,14 @@ public:
     bool getIsFirstRun();
     void setIsFirstRun(bool isFirstRun);
 
+    uint16_t getDeviceId();
+    void setDeviceId(uint16_t deviceId);
+
     void setWiFiConfiguration(WiFiConfiguration *wifiConfiguration);
     void getWiFiConfiguration(WiFiConfiguration *wifiConfiguration);
+    std::string getWiFiSsid();
+    void setWiFiSsid(std::string ssid);
+    void setWiFiPassword(std::string password);
 
     void getCameraConfiguration(CameraConfiguration *cameraConfiguration);
     void setCameraConfiguration(const CameraConfiguration *cameraConfiguration);
