@@ -7,9 +7,10 @@
 
 EspCamera::EspCamera() {}
 
-bool EspCamera::init(uint8_t deviceId, const CameraConfiguration *cameraConfiguration)
+bool EspCamera::init(uint8_t deviceId, const CameraConfiguration *cameraConfiguration, String serverUrl)
 {
     _deviceId = deviceId;
+    _serverUrl = serverUrl;
 
     _http.setReuse(false);
     _http.setTimeout(5000);
@@ -147,7 +148,7 @@ bool EspCamera::getAndSendPhoto(bool isFlashOn)
         return false;
     }
 
-    String path = serverName + serverPath + String(_deviceId);
+    String path = _serverUrl + uploadPhotoEndpoint + String(_deviceId);
 
     Serial.println("Connecting to server: " + path);
 
@@ -178,7 +179,7 @@ bool EspCamera::getAndSendPhoto(bool isFlashOn)
     }
     else
     {
-        getBody = "Connection to " + serverName + " failed.";
+        getBody = "Connection to " + _serverUrl + " failed.";
         Serial.println(getBody);
         return false;
     }

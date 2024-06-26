@@ -32,14 +32,13 @@ class EspCamera
 public:
     EspCamera();
 
-    bool init(uint8_t deviceId, const CameraConfiguration *cameraConfiguration);
+    bool init(uint8_t deviceId, const CameraConfiguration *cameraConfiguration, String serverUrl);
     bool deinit();
     void warmup();
     bool getAndSendPhoto(bool isFlashOn);
 
 private:
-    const String serverName = "http://192.168.1.57:8123/";
-    const String serverPath = "photo/";
+    const String uploadPhotoEndpoint = "photo/";
 
     void updateConfiguration(sensor_t *sensor, const CameraConfiguration cameraConfiguration);
     void printCameraConfiguration(const CameraConfiguration *cameraConfiguration);
@@ -47,6 +46,7 @@ private:
 
     bool _isInitialized = false;
     uint8_t _deviceId;
+    String _serverUrl;
     HTTPClient _http;
     WiFiClient _client;
     Led _ledFlash = Led(4);

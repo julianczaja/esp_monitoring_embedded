@@ -16,6 +16,9 @@
 #define WIFI_SSID_CHARACTERISTIC_UUID           "1b5f00db-42f9-4cbd-a6ba-0e19a9192118"
 #define WIFI_PASSWORD_CHARACTERISTIC_UUID       "bf4c3e01-11d0-40b4-9109-51202baebd28"
 
+#define SERVER_INFO_SERVICE_UUID                "2eb6c3ff-7c3a-4a83-86fb-ac0187067bc3"
+#define SERVER_URL_CHARACTERISTIC_UUID          "a917d3d5-617b-4291-bb3b-7c63505a0bbe"
+
 #define SETTINGS_SERVICE_UUID                   "ecb44d46-93cf-45cc-bd34-b82205e80d7b"
 #define FRAME_SIZE_CHARACTERISTIC_UUID          "2c0980bd-efc9-49e2-8043-ad94bf4bf81e"
 #define PHOTO_INTERVAL_CHARACTERISTIC_UUID      "184711ee-5964-4f31-9d2b-5405da58a7d9"
@@ -59,10 +62,12 @@ public:
 private:
     void setupInfoServiceCharacteristics(SettingsCharacteristicCallbacks callback);
     void setupWifiCredentialsServiceCharacteristics(SettingsCharacteristicCallbacks callback);
+    void setupServerInfoServiceCharacteristics(SettingsCharacteristicCallbacks callback);
     void setupSettingsServiceCharacteristics(SettingsCharacteristicCallbacks callback);
     BLEServer *_server;
     BLEService *_infoService;
     BLEService *_wifiCredentialsService;
+    BLEService *_serverInfoService;
     BLEService *_settingsService;
     BLEAdvertising *_advertising;
     uint8_t _deviceId;

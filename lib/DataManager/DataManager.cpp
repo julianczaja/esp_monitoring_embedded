@@ -14,9 +14,9 @@ bool DataManager::getIsFirstRun()
     EEPROM.begin(EEPROM_SIZE);
     delay(READ_WRITE_WAIT_TIME_MS);
     uint8_t isFirstRun = EEPROM.readByte(FIRST_RUN_FLAG_ADDRESS);
-    Serial.printf("isFirstRun: %d (%d)\n", isFirstRun != 124, isFirstRun);
+    Serial.printf("isFirstRun: %d (%d)\n", isFirstRun != 120, isFirstRun);
     EEPROM.end();
-    return isFirstRun != 124; 
+    return isFirstRun != 120; 
 }
 
 void DataManager::setIsFirstRun(bool isFirstRun) 
@@ -24,7 +24,7 @@ void DataManager::setIsFirstRun(bool isFirstRun)
     Serial.printf("\n> DataManager::setIsFirstRun: %d\n", isFirstRun);
     EEPROM.begin(EEPROM_SIZE);
     delay(READ_WRITE_WAIT_TIME_MS);
-    EEPROM.writeByte(FIRST_RUN_FLAG_ADDRESS, isFirstRun ? 0 : 124);
+    EEPROM.writeByte(FIRST_RUN_FLAG_ADDRESS, isFirstRun ? 0 : 120);
     EEPROM.end();
 }
 
@@ -46,6 +46,23 @@ void DataManager::setDeviceId(uint16_t deviceId)
     delay(READ_WRITE_WAIT_TIME_MS);
     EEPROM.writeUShort(DEVICE_ID_ADDRESS, deviceId);
     EEPROM.end();
+}
+
+void DataManager::setServerUrl(const String &url)
+{
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    EEPROM.writeString(SERVER_URL_ADDRESS, url);
+    EEPROM.end();
+}
+
+String DataManager::getServerUrl()
+{
+    EEPROM.begin(EEPROM_SIZE);
+    delay(READ_WRITE_WAIT_TIME_MS);
+    String url = EEPROM.readString(SERVER_URL_ADDRESS);
+    EEPROM.end();
+    return url;
 }
 
 void DataManager::setWiFiConfiguration(WiFiConfiguration *wifiConfiguration)

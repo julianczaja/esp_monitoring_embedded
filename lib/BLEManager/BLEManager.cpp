@@ -26,6 +26,10 @@ void BLEManager::init()
     setupWifiCredentialsServiceCharacteristics(*characteristicsCallback);
     _wifiCredentialsService->start();
 
+    _serverInfoService = _server->createService(BLEUUID(SERVER_INFO_SERVICE_UUID));
+    setupServerInfoServiceCharacteristics(*characteristicsCallback);
+    _serverInfoService->start();
+
     _settingsService = _server->createService(BLEUUID(SETTINGS_SERVICE_UUID), 24U, 0U);
     setupSettingsServiceCharacteristics(*characteristicsCallback);
     _settingsService->start();
@@ -72,6 +76,18 @@ void BLEManager::setupWifiCredentialsServiceCharacteristics(SettingsCharacterist
         WIFI_PASSWORD_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE);
     wifiPasswordCharacteristic->addDescriptor(passwordDescriptor);
     wifiPasswordCharacteristic->setCallbacks(characteristicsCallback);
+}
+
+void BLEManager::setupServerInfoServiceCharacteristics(SettingsCharacteristicCallbacks callback)
+{
+   BLEDescriptor *urlDescriptor = new BLEDescriptor(BLEUUID((uint16_t)0x2901));
+    urlDescriptor->setValue("URL");
+    BLECharacteristic *serverUrlCharacteristic = _serverInfoService->createCharacteristic(
+        SERVER_URL_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+    String serverUrl = _dataManager.getServerUrl();
+    serverUrlCharacteristic->setReadProperty(serverUrl);
+    serverUrlCharacteristic->addDescriptor(urlDescriptor);
+    serverUrlCharacteristic->setCallbacks(characteristicsCallback); 
 }
 
 void BLEManager::setupSettingsServiceCharacteristics(SettingsCharacteristicCallbacks callback)
@@ -177,6 +193,11 @@ void SettingsCharacteristicCallbacks::onWrite(BLECharacteristic *characteristic)
         Serial.printf("WIFI_PASSWORD_CHARACTERISTIC_UUID value: %s\n", value.c_str());
         _dataManager.setWiFiPassword(value);
     }
+    else if (uuid == SERVER_URL_CHARACTERISTIC_UUID)
+    {
+        Serial.printf("SERVER_URL_CHARACTERISTIC_UUID value: %s\n", value.c_str());
+        _dataManager.setServerUrl(value.c_str());
+    }
     else if (uuid == FRAME_SIZE_CHARACTERISTIC_UUID)
     {
         uint16_t frameSize = strtol(value.c_str(), NULL, 10);
@@ -260,6 +281,13 @@ void SettingsCharacteristicCallbacks::onRead(BLECharacteristic *characteristic)
     
         Serial.printf("SettingsCharacteristicCallbacks::onRead -> setting %s\n", ssid.c_str());
         characteristic->setValue(ssid);
+        return;
+    }
+    else if (uuid == SERVER_URL_CHARACTERISTIC_UUID)
+    {
+        String url = _dataManager.getServerUrl().c_str();
+        Serial.printf("SettingsCharacteristicCallbacks::onRead -> setting %s\n", url.c_str());
+        characteristic->setValue(url.c_str());
         return;
     }
 

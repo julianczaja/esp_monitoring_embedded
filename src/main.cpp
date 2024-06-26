@@ -107,7 +107,9 @@ void setupCameraMode()
   CameraConfiguration cameraConfiguration = CameraConfiguration();
   dataManager.getCameraConfiguration(&cameraConfiguration);
 
-  if (camera.init(DEVICE_ID, &cameraConfiguration) == false)
+  String serverUrl = dataManager.getServerUrl();
+
+  if (camera.init(DEVICE_ID, &cameraConfiguration, serverUrl) == false)
   {
     dataManager.increaseFailuresCount();
     onError((char *)"Can't init camera");

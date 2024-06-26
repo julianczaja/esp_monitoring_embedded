@@ -7,7 +7,7 @@
 #include "WiFiConfiguration.h"
 #include "CameraConfiguration.h"
 
-#define EEPROM_SIZE                     128
+#define EEPROM_SIZE                     256
 #define DEVICE_ID_ADDRESS               0
 #define FIRST_RUN_FLAG_ADDRESS          2
 #define WIFI_CONFIGURATION_ADDRESS      4
@@ -23,8 +23,9 @@
 #define FLASH_ON_ADDRESS                85
 #define VERTICAL_FLIP_ADDRESS           87
 #define HORIZONTAL_MIRROR_ADDRESS       89
+#define SERVER_URL_ADDRESS              91
 
-#define READ_WRITE_WAIT_TIME_MS     30
+#define READ_WRITE_WAIT_TIME_MS     20
 
 class DataManager
 {
@@ -38,6 +39,9 @@ public:
 
     uint16_t getDeviceId();
     void setDeviceId(uint16_t deviceId);
+
+    String getServerUrl();
+    void setServerUrl(const String &url);
 
     void setWiFiConfiguration(WiFiConfiguration *wifiConfiguration);
     void getWiFiConfiguration(WiFiConfiguration *wifiConfiguration);
